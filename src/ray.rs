@@ -8,6 +8,7 @@ use cgmath::{Vector2, Vector3};
 use cgmath::prelude::*;
 
 use crate::traits::{Continuous, ContinuousTransformed, Discrete, DiscreteTransformed};
+use crate::MintBaseNum;
 
 /// A generic ray starting at `origin` and extending infinitely in
 /// `direction`.
@@ -47,6 +48,31 @@ where
             transform.transform_vector(self.direction),
         )
     }
+}
+impl<S, V, P> Ray<S, P, V>
+where
+    S: crate::MintBaseNum,
+    V: MintVectorTrait<Scalar = S>,
+    P: MintPointTraitN<Scalar = S, Diff = V>,
+{
+    /// Create a generic ray
+    pub fn new(origin: P, direction: V) -> Ray<S, P, V> {
+        Ray {
+            origin,
+            direction,
+            phantom_s: PhantomData,
+        }
+    }
+}
+
+trait MintVectorTrait: Copy + Clone
+{
+    type Scalar: MintBaseNum;
+}
+trait MintPointTraitN: Copy + Clone
+{
+    type Scalar: MintBaseNum;
+    type Diff: MintVectorTrait<Scalar = Self::Scalar>;
 }
 
 /// 2D ray
