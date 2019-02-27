@@ -38,6 +38,8 @@ cgmath = "0.17"
 serde = { version = "1.0", optional = true, features = ["derive"] }
 bit-set = "0.5"
 smallvec = "0.6.1"
+num-traits = "*"
+mint = "*"
 
 [target.'cfg(feature="serde")'.dependencies]
 cgmath = { version = "0.17", features = ["serde"] }

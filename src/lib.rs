@@ -39,6 +39,7 @@ pub mod prelude;
 pub mod dbvt;
 pub mod primitive;
 pub mod algorithm;
+pub mod mint_support;
 
 // Modules
 
