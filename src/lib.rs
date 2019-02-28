@@ -34,6 +34,7 @@ pub use plane::Plane;
 pub use ray::*;
 pub use traits::*;
 pub use volume::*;
+pub use mint_support::*;
 
 pub mod prelude;
 pub mod dbvt;

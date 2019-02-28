@@ -26,6 +26,7 @@ use cgmath::Transform as CGTransform;
 use crate::Aabb2 as CGAabb2;
 use crate::Aabb3 as CGAabb3;
 use crate::Aabb as CGAabbTrait;
+use crate::traits::Contains;
 
 
 /// All scalars must conform to the following
@@ -223,7 +224,7 @@ impl<S,V,P> From<CGLine<S,V,P>> for MintLine3<S>
 }
 
 /// An axis-aligned bounding box for an object
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub struct MintAABBStruct<S,P> {
     /// Minimum point of the AABB
     pub min: P,
@@ -367,9 +368,8 @@ pub trait MintAABBTrait: Sized {
 }
 impl<S> MintAABBTrait for MintAabb2<S>
     where S: MintBaseNum,
-          MintPoint2<S>: Into<CGPoint2<S>> + From<CGPoint2<S>>,
-          MintVector2<S>: Into<CGVector2<S>> + From<CGVector2<S>>,
-          CGPoint2<S>: From<MintPoint2<S>>,
+          CGPoint2<S>: From<MintPoint2<S>> + Into<MintPoint2<S>>,
+          CGVector2<S>: From<MintVector2<S>> + Into<MintVector2<S>>,
 {
     type Scalar = S;
     type Diff = MintVector2<S>;
@@ -433,9 +433,8 @@ impl<S> MintAABBTrait for MintAabb2<S>
 }
 impl<S> MintAABBTrait for MintAabb3<S>
     where S: MintBaseNum,
-          MintPoint3<S>: Into<CGPoint3<S>> + From<CGPoint3<S>>,
-          MintVector3<S>: Into<CGVector3<S>> + From<CGVector3<S>>,
-          CGPoint3<S>: From<MintPoint3<S>>,
+          CGPoint3<S>: From<MintPoint3<S>> + Into<MintPoint3<S>>,
+          CGVector3<S>: From<MintVector3<S>> + Into<MintVector3<S>>,
 {
     type Scalar = S;
     type Diff = MintVector3<S>;
@@ -495,5 +494,15 @@ impl<S> MintAABBTrait for MintAabb3<S>
     fn transform<T>(&self, transform: &T) -> Self where
         T: CGTransform<Self::CGPoint> {
         (CGAabb3::<S>::from(self)).transform(transform).into()
+    }
+}
+impl<S:MintBaseNum> Contains<MintPoint2<S>> for MintAabb2<S> {
+    fn contains(&self, p: &MintPoint2<S>) -> bool {
+        CGAabb2::from(self).contains(&CGPoint2::from(p.clone()))
+    }
+}
+impl<S:MintBaseNum> Contains<MintPoint3<S>> for MintAabb3<S> {
+    fn contains(&self, p: &MintPoint3<S>) -> bool {
+        CGAabb3::from(self).contains(&CGPoint3::from(p.clone()))
     }
 }
