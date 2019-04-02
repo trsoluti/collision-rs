@@ -12,8 +12,9 @@ use collision::MintAabb2 as Aabb2;
 use collision::MintAabb3 as Aabb3;
 use collision::{Contains, Continuous, Discrete, SurfaceArea, Union};
 //use collision::{Line2, Line3, Ray2, Ray3, Sphere};
-use collision::{MintLine2 as Line2, MintLine3 as Line3, Ray2, Ray3, Sphere};
-use collision::{Plane, PlaneBound, Ray, Relation};
+use collision::{MintLine2 as Line2, MintLine3 as Line3, MintRay2 as Ray2, MintRay3 as Ray3, Sphere};
+use collision::{Plane, PlaneBound, MintRay as Ray, Relation};
+use collision::MintRayTrait;
 
 #[test]
 fn test_general() {

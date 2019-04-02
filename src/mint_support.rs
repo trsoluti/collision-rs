@@ -27,6 +27,7 @@ use crate::Aabb2 as CGAabb2;
 use crate::Aabb3 as CGAabb3;
 use crate::Aabb as CGAabbTrait;
 use crate::traits::Contains;
+use crate::Ray as CGRay;
 
 
 /// All scalars must conform to the following
@@ -506,3 +507,140 @@ impl<S:MintBaseNum> Contains<MintPoint3<S>> for MintAabb3<S> {
         CGAabb3::from(self).contains(&CGPoint3::from(p.clone()))
     }
 }
+
+/// A generic ray starting at `origin` and extending infinitely in
+/// `direction`.
+#[derive(Copy, Clone, PartialEq, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+pub struct MintRay<S, P, V> {
+    /// Ray origin
+    pub origin: P,
+    /// Normalized ray direction
+    pub direction: V,
+    phantom_s: PhantomData<S>,
+}
+/// 2D ray
+pub type MintRay2<S> = MintRay<S, MintPoint2<S>, MintVector2<S>>;
+/// 3D ray
+pub type MintRay3<S> = MintRay<S, MintPoint3<S>, MintVector3<S>>;
+/// Characteristics of a Ray
+pub trait MintRayTrait: Sized + Copy + Clone + Debug {
+    /// The scalar base of the point (e.g. f32, i32)
+    type Scalar: MintBaseNum;
+    /// The type of the line's direction (e.g. Vector2<Scalar>)
+    type Diff: MintVectorTrait<Scalar = <Self as MintRayTrait>::Scalar>;
+    /// The type of ray's origin (e.g. Point2<Scalar>)
+    type Point: MintPointTrait<Scalar = <Self as MintRayTrait>::Scalar>;
+
+    /// Create a generic ray starting at `origin` and extending infinitely in
+    /// `direction`.
+    fn new<
+        P:Sized+Into<Self::Point>,
+        V:Sized+Into<Self::Diff>
+    >(origin: P, direction: V) -> MintRay<Self::Scalar, Self::Point, Self::Diff> {
+        MintRay {
+            origin: origin.into(),
+            direction: direction.into(),
+            phantom_s: PhantomData,
+        }
+    }
+    /// Create a new ray by applying a transform.
+    /*
+    fn transform<T>(&self, transform: T) -> Self
+        where
+            T: CGTransform<Self::Point>,
+    {
+        Self::new(
+            transform.transform_point(self.origin),
+            transform.transform_vector(self.direction),
+        )
+    }*/
+    fn transform<P,T>(&self, transform:T) -> MintRay<Self::Scalar, Self::Point, Self::Diff>
+        where
+            P: EuclideanSpace<Scalar = Self::Scalar> + From<Self::Point> + Into<Self::Point>,
+            <P as EuclideanSpace>::Diff: From<<Self as MintRayTrait>::Diff> + Into<Self::Diff>,
+            T: CGTransform<P>,
+    {
+        Self::new(
+            transform.transform_point(self.get_origin().into()),
+            transform.transform_vector(self.get_direction().into())
+        )
+    }
+    /// Get the origin of the ray
+    fn get_origin(&self) -> Self::Point;
+    /// Get the direction of the ray
+    fn get_direction(&self) -> Self::Diff;
+}
+impl<S> MintRayTrait for MintRay2<S>
+    where
+        S: MintBaseNum
+{
+    type Scalar = S;
+    type Diff = MintVector2<S>;
+    type Point = MintPoint2<S>;
+
+    fn get_origin(&self) -> Self::Point {
+        self.origin
+    }
+
+    fn get_direction(&self) -> Self::Diff {
+        self.direction
+    }
+}
+impl<S> MintRayTrait for MintRay3<S>
+    where
+        S: MintBaseNum
+{
+    type Scalar = S;
+    type Diff = MintVector3<S>;
+    type Point = MintPoint3<S>;
+
+    fn get_origin(&self) -> Self::Point {
+        self.origin
+    }
+
+    fn get_direction(&self) -> Self::Diff {
+        self.direction
+    }
+}
+impl<S,V,P> Into<CGRay<S,P,V>> for MintRay2<S>
+    where
+        S: MintBaseNum,
+        V: VectorSpace<Scalar = S> + From<MintVector2<S>>,
+        P: EuclideanSpace<Scalar = S, Diff = V> + From<MintPoint2<S>>,
+{
+    fn into(self) -> CGRay<S, P, V> {
+        CGRay::new(self.origin.into(), self.direction.into())
+    }
+}
+impl<S,V,P> From<CGRay<S,P,V>> for MintRay2<S>
+    where
+        S: MintBaseNum,
+        V: VectorSpace<Scalar = S> + Into<MintVector2<S>>,
+        P: EuclideanSpace<Scalar = S, Diff = V> + Into<MintPoint2<S>>,
+{
+    fn from(other: CGRay<S, P, V>) -> Self {
+        MintRay::<S, MintPoint2<S>, MintVector2<S>>::new( other.origin, other.direction )
+    }
+}
+impl<S,V,P> Into<CGRay<S,P,V>> for MintRay3<S>
+    where
+        S: MintBaseNum,
+        V: VectorSpace<Scalar = S> + From<MintVector3<S>>,
+        P: EuclideanSpace<Scalar = S, Diff = V> + From<MintPoint3<S>>,
+{
+    fn into(self) -> CGRay<S, P, V> {
+        CGRay::new(self.origin.into(), self.direction.into())
+    }
+}
+impl<S,V,P> From<CGRay<S,P,V>> for MintRay3<S>
+    where
+        S: MintBaseNum,
+        V: VectorSpace<Scalar = S> + Into<MintVector3<S>>,
+        P: EuclideanSpace<Scalar = S, Diff = V> + Into<MintPoint3<S>>,
+{
+    fn from(other: CGRay<S, P, V>) -> Self {
+        MintRay::<S, MintPoint3<S>, MintVector3<S>>::new( other.origin, other.direction )
+    }
+}
+// TODO: implement continuous,discrete,etc for MintRay (by transforming)
